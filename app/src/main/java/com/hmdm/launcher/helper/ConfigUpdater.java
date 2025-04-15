@@ -290,12 +290,16 @@ public class ConfigUpdater {
             if (pushOptions.equals(ServerConfig.PUSH_OPTIONS_MQTT_WORKER)
                     || pushOptions.equals(ServerConfig.PUSH_OPTIONS_MQTT_ALARM)) {
                 try {
-                    URL url = new URL(settingsHelper.getBaseUrl());
+                    // The Base changed code as following
+//                    URL url = new URL(settingsHelper.getBaseUrl());
+
                     Runnable nextRunnable = () -> {
                         checkFactoryReset();
                     };
-                    PushNotificationMqttWrapper.getInstance().connect(context, url.getHost(), BuildConfig.MQTT_PORT,
-                            pushOptions, keepaliveTime, settingsHelper.getDeviceId(), nextRunnable, nextRunnable);
+                    PushNotificationMqttWrapper.getInstance().connect(context, settingsHelper.getMqttDomain(),
+                            settingsHelper.getMqttPort(),settingsHelper.getMqttTls(), settingsHelper.getMqttUsername(),
+                            settingsHelper.getMqttPassword(), pushOptions, keepaliveTime,
+                            settingsHelper.getDeviceId(), nextRunnable, nextRunnable);
                 } catch (Exception e) {
                     e.printStackTrace();
                     checkFactoryReset();

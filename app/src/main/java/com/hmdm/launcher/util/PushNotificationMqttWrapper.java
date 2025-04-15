@@ -39,6 +39,7 @@ import androidx.work.WorkerParameters;
 import com.hmdm.launcher.BuildConfig;
 import com.hmdm.launcher.Const;
 import com.hmdm.launcher.helper.CryptoHelper;
+import com.hmdm.launcher.helper.SettingsHelper;
 import com.hmdm.launcher.json.PushMessageJson;
 import com.hmdm.launcher.json.ServerConfig;
 import com.hmdm.launcher.worker.PushNotificationProcessor;
@@ -88,9 +89,13 @@ public class PushNotificationMqttWrapper {
         return instance;
     }
 
-    public void connect(final Context context, String host, int port, String pushType, int keepaliveTime,
+    public void connect(final Context context, String host, int port,boolean useSsl,String username,
+
+                        String password, String pushType, int keepaliveTime,
                         final String deviceId, final Runnable onSuccess, final Runnable onFailure) {
+        String serverUri;
         this.context = context;
+
         cancelReconnectionAfterFailure(context);
         if (client != null && client.isConnected()) {
             if (onSuccess != null) {
@@ -110,9 +115,16 @@ public class PushNotificationMqttWrapper {
             connectOptions.setPingType(MqttAndroidConnectOptions.PING_ALARM);
             connectOptions.setKeepAliveInterval(keepaliveTime);
         }
-        connectOptions.setUserName("hmdm");
-        connectOptions.setPassword(CryptoHelper.getSHA1String("hmdm" + BuildConfig.REQUEST_SIGNATURE).toCharArray());
-        String serverUri = "tcp://" + host + ":" + port;
+        connectOptions.setUserName(username);
+//        connectOptions.setPassword(CryptoHelper.getSHA1String("hmdm" + BuildConfig.REQUEST_SIGNATURE).toCharArray());
+        connectOptions.setPassword(password.toCharArray());
+
+        if (useSsl){
+            serverUri = "ssl://" + host + ":" + port;
+        }
+        else {
+            serverUri = "tcp://" + host + ":" + port;
+        }
 
         if (client != null) {
             // Here we go after reconnection.
@@ -167,7 +179,8 @@ public class PushNotificationMqttWrapper {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                scheduleReconnectionAfterFailure(context, host, port, pushType, keepaliveTime, deviceId);
+                scheduleReconnectionAfterFailure(context, host, port,useSsl,username,password,
+                        pushType, keepaliveTime, deviceId);
                 if (onFailure != null) {
                     handler.post(onFailure);
                 }
@@ -186,7 +199,8 @@ public class PushNotificationMqttWrapper {
                     e.printStackTrace();
                     connectHangupMonitorHandler.removeCallbacksAndMessages(null);
                     RemoteLogger.log(context, Const.LOG_WARN, "MQTT connection failure");
-                    scheduleReconnectionAfterFailure(context, host, port, pushType, keepaliveTime, deviceId);
+                    scheduleReconnectionAfterFailure(context, host, port, useSsl, username, password,
+                            pushType, keepaliveTime, deviceId);
                     // We fail here but Mqtt client tries to reconnect and we need to subscribe
                     // after connection succeeds. This is done in the extended callback client.
                     // The flag needProcessConnectExtended prevents duplicate subscribe after
@@ -289,12 +303,16 @@ public class PushNotificationMqttWrapper {
         WorkManager.getInstance(context.getApplicationContext()).cancelUniqueWork(WORKER_TAG_MQTT_RECONNECT);
     }
 
-    private void scheduleReconnectionAfterFailure(Context context, String host, int port,
+    private void scheduleReconnectionAfterFailure(Context context, String host, int port, boolean useSsl,
+                                                  String username, String password,
                                                   String pushType, int keepaliveTime, final String deviceId) {
         RemoteLogger.log(context, Const.LOG_INFO, "Scheduling MQTT reconnection in " + MQTT_RECONNECT_INTERVAL_SEC + " sec");
         Data data = new Data.Builder()
                 .putString("host", host)
                 .putInt("port", port)
+                .putBoolean("tls", useSsl)
+                .putString("username", username)
+                .putString("password", password)
                 .putString("pushType", pushType)
                 .putInt("keepalive", keepaliveTime)
                 .putString("deviceId", deviceId)
@@ -324,8 +342,12 @@ public class PushNotificationMqttWrapper {
         @Override
         public Result doWork() {
             Data data = getInputData();
+            // TODO: need to check getInputData due to assuming result of getInputData() have all
+            // required variables
             PushNotificationMqttWrapper.getInstance().connect(context, data.getString("host"),
-                    data.getInt("port", 0), data.getString("pushType"),
+                    data.getInt("port", 1883),data.getBoolean("tls",false),
+                    data.getString("username"), data.getString("password"),
+                    data.getString("pushType"),
                     data.getInt("keepalive", Const.DEFAULT_PUSH_ALARM_KEEPALIVE_TIME_SEC),
                     data.getString("deviceId"), null, null);
             return Result.success();

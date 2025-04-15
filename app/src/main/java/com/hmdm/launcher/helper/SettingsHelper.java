@@ -15,6 +15,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Jean edited on Apr 16, 2025
+ * Added features:
+ *  - add function for external MQTT
  */
 
 package com.hmdm.launcher.helper;
@@ -377,5 +381,42 @@ public class SettingsHelper {
 
     public Set<String> getAllowedClasses() {
         return allowedClasses;
+    }
+
+    // ========== THE BASE ADDED ==========
+    private static final String PREF_KEY_MQTT_DOMAIN = ".helpers.MQTT_DOMAIN";
+    private static final String PREF_KEY_MQTT_PORT = ".helpers.MQTT_PORT";
+    private static final String PREF_KEY_MQTT_TLS = ".helpers.MQTT_TLS";
+    private static final String PREF_KEY_MQTT_USERNAME = ".helpers.MQTT_USERNAME";
+    private static final String PREF_KEY_MQTT_PASSWORD = ".helpers.MQTT_PASSWORD";
+    public boolean setMqttDomain( String mqttDomain ) {
+        return sharedPreferences.edit().putString(PACKAGE_NAME + PREF_KEY_MQTT_DOMAIN, mqttDomain ).commit();
+    }
+    public String getMqttDomain() {
+        return sharedPreferences.getString(PACKAGE_NAME + PREF_KEY_MQTT_DOMAIN, BuildConfig.MQTT_DOMAIN );
+    }
+    public boolean setMqttPort( Integer mqttPort ) {
+        return sharedPreferences.edit().putInt(PACKAGE_NAME + PREF_KEY_MQTT_PORT, mqttPort ).commit();
+    }
+    public Integer getMqttPort() {
+        return sharedPreferences.getInt(PACKAGE_NAME + PREF_KEY_MQTT_PORT, BuildConfig.MQTT_PORT );
+    }
+    public boolean setMqttTls( boolean mqttTls ) {
+        return sharedPreferences.edit().putBoolean(PACKAGE_NAME + PREF_KEY_MQTT_TLS, mqttTls ).commit();
+    }
+    public boolean getMqttTls() {
+        return sharedPreferences.getBoolean(PACKAGE_NAME + PREF_KEY_MQTT_TLS, BuildConfig.MQTT_TLS );
+    }
+    public boolean setMqttUsername( String mqttUsername ) {
+        return sharedPreferences.edit().putString(PACKAGE_NAME + PREF_KEY_MQTT_USERNAME, mqttUsername ).commit();
+    }
+    public String getMqttUsername() {
+        return sharedPreferences.getString(PACKAGE_NAME + PREF_KEY_MQTT_USERNAME, BuildConfig.MQTT_USERNAME );
+    }
+    public boolean setMqttPassword( String mqttPassword ) {
+        return sharedPreferences.edit().putString(PACKAGE_NAME + PREF_KEY_MQTT_PASSWORD, mqttPassword ).commit();
+    }
+    public String getMqttPassword() {
+        return sharedPreferences.getString(PACKAGE_NAME + PREF_KEY_MQTT_PASSWORD, BuildConfig.MQTT_PASSWORD );
     }
 }

@@ -41,6 +41,7 @@ import com.hmdm.launcher.R;
 import com.hmdm.launcher.helper.SettingsHelper;
 import com.hmdm.launcher.pro.ProUtils;
 import com.hmdm.launcher.util.PushNotificationMqttWrapper;
+import com.hmdm.launcher.util.RemoteLogger;
 import com.hmdm.launcher.util.Utils;
 
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
@@ -705,13 +706,16 @@ public class MqttService extends Service implements MqttTraceHandler {
       SettingsHelper settingsHelper = SettingsHelper.getInstance(this);
       if (intent != null && intent.getBooleanExtra(MqttAndroidClient.EXTRA_START_AT_BOOT, false)) {
           try {
+//              TODO: WHAT IS EXTRA_DOMAIN FROM AND USE FOR?
               String domain = intent.getStringExtra(MqttAndroidClient.EXTRA_DOMAIN);
               String pushType = intent.getStringExtra(MqttAndroidClient.EXTRA_PUSH_OPTIONS);
               int keepaliveTime = intent.getIntExtra(MqttAndroidClient.EXTRA_KEEPALIVE_TIME, Const.DEFAULT_PUSH_ALARM_KEEPALIVE_TIME_SEC);
               String deviceId = intent.getStringExtra(MqttAndroidClient.EXTRA_DEVICE_ID);
+              RemoteLogger.log(this,Const.LOG_INFO,"Domain: "+domain+"Push Type: " + pushType + "DeviceID "+ deviceId);
 
-              PushNotificationMqttWrapper.getInstance().connect(this,
-                      domain, BuildConfig.MQTT_PORT, pushType, keepaliveTime, deviceId,
+              PushNotificationMqttWrapper.getInstance().connect(this,settingsHelper.getMqttDomain(),
+                      settingsHelper.getMqttPort(),settingsHelper.getMqttTls(), settingsHelper.getMqttUsername(),
+                      settingsHelper.getMqttPassword(), pushType, keepaliveTime, deviceId,
                       null,null);
           } catch (Exception e) {
               e.printStackTrace();
